@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'quiz_brain.dart';
+import 'package:rflutter_alert/rflutter_alert.dart';
+
+QuizBrain quizBrain = QuizBrain();
 
 void main() => runApp(Quizzler());
 
@@ -25,6 +29,73 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> {
+  List<Widget> scoreKeeper = [];
+
+  // List<String> questions = [
+  //   'You can lead a cow down stairs but not up stairs.',
+  //   'Approximately one quarter of human bones are in the feet.',
+  //   'A slug\'s blood is green.'
+  // ];
+
+  // List<bool> answers = [false, true, true];
+  void checkAnswer(bool userPickedAnswer) {
+    _onAlertButtonPressed(context) {
+      Alert(
+        context: context,
+        type: AlertType.success,
+        title: "Finished",
+        desc: "You have completed the quiz.",
+        buttons: [
+          DialogButton(
+            child: Text(
+              "Close",
+              style: TextStyle(color: Colors.white, fontSize: 20),
+            ),
+            onPressed: () {
+              setState(() {
+                quizBrain.resetQuestionNumber();
+                scoreKeeper = [];
+                Navigator.pop(context);
+              });
+            },
+            width: 120,
+          )
+        ],
+      ).show();
+    }
+
+    if (quizBrain.endReached()) {
+      _onAlertButtonPressed(context);
+      setState(() {
+        quizBrain.resetQuestionNumber();
+        scoreKeeper = [];
+      });
+    } else {
+      bool correctAnswer = quizBrain.getQuestionAnswer();
+      setState(() {
+        if (correctAnswer == userPickedAnswer) {
+          scoreKeeper.add(
+            Icon(
+              Icons.check,
+              color: Colors.green,
+            ),
+          );
+        } else {
+          scoreKeeper.add(
+            Icon(
+              Icons.close,
+              color: Colors.red,
+            ),
+          );
+        }
+
+        quizBrain.nextQuestion();
+      });
+    }
+  }
+
+  int questionNumber = 0;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -37,7 +108,7 @@ class _QuizPageState extends State<QuizPage> {
             padding: EdgeInsets.all(10.0),
             child: Center(
               child: Text(
-                'This is where the question text will go.',
+                quizBrain.getQuestionText(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 25.0,
@@ -62,6 +133,7 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked true.
+                checkAnswer(true);
               },
             ),
           ),
@@ -80,11 +152,15 @@ class _QuizPageState extends State<QuizPage> {
               ),
               onPressed: () {
                 //The user picked false.
+                checkAnswer(false);
               },
             ),
           ),
         ),
-        //TODO: Add a Row here as your score keeper
+        Expanded(
+            child: Row(
+          children: scoreKeeper,
+        )),
       ],
     );
   }
